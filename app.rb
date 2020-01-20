@@ -39,7 +39,14 @@ class HangpersonApp < Sinatra::Base
   # If a guess is invalid, set flash[:message] to "Invalid guess."
   post '/guess' do
     letter = params[:guess].to_s[0]
-    @game.guess(letter)
+    begin
+      new_letter = @game.guess(letter)
+      if not new_letter
+        flash[:message] = "You have already used that letter."
+      end
+    rescue ArgumentError
+      flash[:message] = "Invalid guess."
+    end
     redirect '/show'
   end
 
@@ -50,11 +57,19 @@ class HangpersonApp < Sinatra::Base
   # wrong_guesses and word_with_guesses from @game.
   get '/show' do
     ### YOUR CODE HERE ###
-    erb :show # You may change/remove this line
+    status = @game.check_win_or_lose
+    if status == :play
+      erb :show # You may change/remove this line
+    elsif status == :win
+      redirect '/win'
+    elsif status == :lose
+      redirect '/lose'
+    else
+      raise RuntimeError, "Unknown return type from check_win_or_lose"
+    end
   end
 
   get '/win' do
-    ### YOUR CODE HERE ###
     erb :win # You may change/remove this line
   end
 
